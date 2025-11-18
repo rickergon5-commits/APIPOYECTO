@@ -5,12 +5,14 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
 import cloudinary from "../cloudinary.js"; // 👈 AÑADIDO
 
-// ================================
-// === REGISTRO PACIENTE (normal)
-// ================================
 export const register = async (req, res) => {
   try {
     const { usuario, clave, nombre, correo } = req.body;
+
+    // 🔹 Validación básica
+    if (!usuario || !clave || !nombre || !correo) {
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
+    }
 
     // 1. Verificar que no exista el usuario
     const [exist] = await conmysql.query(
@@ -31,7 +33,7 @@ export const register = async (req, res) => {
       [usuario, hash]
     );
 
-    // 4. Crear usuario con rol por defecto (3 = paciente)
+    // 4. Crear usuario con rol paciente (3)
     const [userResult] = await conmysql.query(
       `INSERT INTO usuarios (login_id, rol_id, nombre, correo)
        VALUES (?, 3, ?, ?)`,
@@ -65,6 +67,7 @@ export const register = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
+
 
 // ================================
 // === LOGIN
