@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 
+
 // === IMPORTACIÓN DE RUTAS ===
 import usuariosRoutes from "./routes/usuarios.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";

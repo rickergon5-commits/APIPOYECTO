@@ -2,7 +2,7 @@
 // Controlador para la tabla medicos
 
 import { conmysql } from "../db.js";
-import cloudinary from "../cloudinary.js"; // 👈 AÑADIDO
+import cloudinary from "../cloudinary.js";
 
 // === PRUEBA DE CONEXIÓN ===
 export const pruebaMedicos = (req, res) => {
@@ -60,7 +60,7 @@ export const postMedico = async (req, res) => {
       numero_licencia,
       especialidad,
       institucion,
-      años_experiencia,
+      anios_experiencia, // ← CAMPO CORRECTO
       fecha_vencimiento_licencia,
       certificado_por,
       notas_certificacion,
@@ -68,82 +68,7 @@ export const postMedico = async (req, res) => {
 
     let documento_certificacion = null;
 
-    // Si viene un archivo (PDF) lo subimos a Cloudinary
-    if (req.file) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "medicos_certificados",
-            resource_type: "raw", // 👈 para PDF/archivos
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        stream.end(req.file.buffer);
-      });
-
-      documento_certificacion = uploadResult.secure_url;
-    } else if (req.body.documento_certificacion) {
-      // Por si algún día quieres permitir URL manual en el body
-      documento_certificacion = req.body.documento_certificacion;
-    }
-
-    const [result] = await conmysql.query(
-      `INSERT INTO medicos
-       (usuario_id, numero_licencia, especialidad, institucion, años_experiencia,
-        documento_certificacion, fecha_vencimiento_licencia, certificado_por, notas_certificacion)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [
-        usuario_id,
-        numero_licencia,
-        especialidad,
-        institucion,
-        años_experiencia,
-        documento_certificacion,
-        fecha_vencimiento_licencia,
-        certificado_por,
-        notas_certificacion,
-      ]
-    );
-
-    res.json({
-      medico_id: result.insertId,
-      documento_certificacion,
-    });
-  } catch (error) {
-    console.error("Error en postMedico:", error);
-    return res.status(500).json({ message: "Error en el servidor" });
-  }
-};
-
-// === ACTUALIZAR MÉDICO (posible nuevo PDF a Cloudinary) ===
-export const putMedico = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      numero_licencia,
-      especialidad,
-      institucion,
-      años_experiencia,
-      fecha_vencimiento_licencia,
-      certificado_por,
-      notas_certificacion,
-    } = req.body;
-
-    // Obtenemos el documento actual por si no envían uno nuevo
-    const [currentRows] = await conmysql.query(
-      "SELECT documento_certificacion FROM medicos WHERE medico_id=?",
-      [id]
-    );
-
-    if (currentRows.length === 0)
-      return res.status(404).json({ message: "Médico no encontrado" });
-
-    let documento_certificacion = currentRows[0].documento_certificacion;
-
-    // Si viene nuevo PDF, subimos a Cloudinary y reemplazamos URL
+    // Subida del PDF
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -161,7 +86,80 @@ export const putMedico = async (req, res) => {
 
       documento_certificacion = uploadResult.secure_url;
     } else if (req.body.documento_certificacion) {
-      // Si te mandan una URL en el body, también la aceptas
+      documento_certificacion = req.body.documento_certificacion;
+    }
+
+    const [result] = await conmysql.query(
+      `INSERT INTO medicos
+       (usuario_id, numero_licencia, especialidad, institucion, años_experiencia,
+        documento_certificacion, fecha_vencimiento_licencia, certificado_por, notas_certificacion)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      [
+        usuario_id,
+        numero_licencia,
+        especialidad,
+        institucion,
+        anios_experiencia || null, // ← CORREGIDO
+        documento_certificacion,
+        fecha_vencimiento_licencia,
+        certificado_por,
+        notas_certificacion,
+      ]
+    );
+
+    res.json({
+      medico_id: result.insertId,
+      documento_certificacion,
+    });
+  } catch (error) {
+    console.error("Error en postMedico:", error);
+    return res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+// === ACTUALIZAR MÉDICO ===
+export const putMedico = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      numero_licencia,
+      especialidad,
+      institucion,
+      anios_experiencia, // ← CAMPO CORRECTO
+      fecha_vencimiento_licencia,
+      certificado_por,
+      notas_certificacion,
+    } = req.body;
+
+    // Obtener documento previo
+    const [currentRows] = await conmysql.query(
+      "SELECT documento_certificacion FROM medicos WHERE medico_id=?",
+      [id]
+    );
+
+    if (currentRows.length === 0)
+      return res.status(404).json({ message: "Médico no encontrado" });
+
+    let documento_certificacion = currentRows[0].documento_certificacion;
+
+    // Subida del PDF (si se envía uno nuevo)
+    if (req.file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "medicos_certificados",
+            resource_type: "raw",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+
+      documento_certificacion = uploadResult.secure_url;
+    } else if (req.body.documento_certificacion) {
       documento_certificacion = req.body.documento_certificacion;
     }
 
@@ -174,7 +172,7 @@ export const putMedico = async (req, res) => {
         numero_licencia,
         especialidad,
         institucion,
-        años_experiencia,
+        anios_experiencia || null, // ← CORREGIDO
         documento_certificacion,
         fecha_vencimiento_licencia,
         certificado_por,
@@ -190,6 +188,7 @@ export const putMedico = async (req, res) => {
       "SELECT * FROM medicos WHERE medico_id=?",
       [id]
     );
+
     res.json(fila[0]);
   } catch (error) {
     console.error("Error en putMedico:", error);

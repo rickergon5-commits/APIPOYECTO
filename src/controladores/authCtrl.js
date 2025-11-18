@@ -3,18 +3,20 @@ import { conmysql } from "../db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
-import cloudinary from "../cloudinary.js"; // 👈 AÑADIDO
+import cloudinary from "../cloudinary.js";
 
+/* ============================================================
+   === REGISTRO PACIENTE
+   ============================================================ */
 export const register = async (req, res) => {
   try {
-    const { usuario, clave, nombre, correo } = req.body;
+    const { usuario, password, nombre, correo } = req.body;
 
-    // 🔹 Validación básica
-    if (!usuario || !clave || !nombre || !correo) {
+    if (!usuario || !password || !nombre || !correo) {
       return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
 
-    // 1. Verificar que no exista el usuario
+    // Verificar que no exista
     const [exist] = await conmysql.query(
       "SELECT * FROM login WHERE usuario = ?",
       [usuario]
@@ -24,25 +26,30 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "El usuario ya existe" });
     }
 
-    // 2. Encriptar contraseña
-    const hash = await bcrypt.hash(clave, 10);
+    // Encriptar
+    const hash = await bcrypt.hash(password, 10);
 
-    // 3. Insertar en login
+    // Insertar login
     const [loginResult] = await conmysql.query(
-      "INSERT INTO login (usuario, contraseña) VALUES (?, ?)",
+      "INSERT INTO login (usuario, password) VALUES (?, ?)",
       [usuario, hash]
     );
 
-    // 4. Crear usuario en tabla usuarios con rol 3 (paciente)
+    // Insertar usuario
     const [userResult] = await conmysql.query(
       `INSERT INTO usuarios (login_id, rol_id, nombre, correo)
        VALUES (?, 3, ?, ?)`,
       [loginResult.insertId, nombre, correo]
     );
 
-    // 5. Respuesta sin token
+    // Insertar en tabla pacientes
+    await conmysql.query(
+      `INSERT INTO pacientes (usuario_id) VALUES (?)`,
+      [userResult.insertId]
+    );
+
     return res.status(201).json({
-      message: "Registro exitoso",
+      message: "Paciente registrado correctamente",
       usuario: {
         usuario_id: userResult.insertId,
         login_id: loginResult.insertId,
@@ -59,13 +66,12 @@ export const register = async (req, res) => {
 };
 
 
-
 // ================================
 // === LOGIN
 // ================================
 export const login = async (req, res) => {
   try {
-    const { usuario, clave } = req.body;
+    const { usuario, password } = req.body;
 
     const [result] = await conmysql.query(
       "SELECT * FROM login WHERE usuario = ?",
@@ -77,12 +83,12 @@ export const login = async (req, res) => {
 
     const loginData = result[0];
 
-    // Comparar contraseña
-    const match = await bcrypt.compare(clave, loginData.contraseña);
+    // Comparar contraseña (OJO: password)
+    const match = await bcrypt.compare(password, loginData.password);
     if (!match)
       return res.status(401).json({ message: "Contraseña incorrecta" });
 
-    // Obtener datos del usuario
+    // Datos usuario
     const [userData] = await conmysql.query(
       "SELECT * FROM usuarios WHERE login_id = ?",
       [loginData.login_id]
@@ -90,7 +96,7 @@ export const login = async (req, res) => {
 
     const user = userData[0];
 
-    // Crear token
+    // Token
     const token = jwt.sign(
       {
         usuario_id: user.usuario_id,
@@ -106,33 +112,35 @@ export const login = async (req, res) => {
       token,
       usuario: user,
     });
+
   } catch (error) {
     console.error("Error en login:", error);
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
-// ==========================================
-// === REGISTRO DE MÉDICO (+ solicitud)
-// ==========================================
+
+/* ============================================================
+   === REGISTRO MÉDICO + SOLICITUD
+   ============================================================ */
 export const registerMedico = async (req, res) => {
-  const connection = await conmysql.getConnection(); // para poder hacer rollback
+  const connection = await conmysql.getConnection();
 
   try {
     const {
       usuario,
-      clave,
+      password,
       nombre,
       correo,
       numero_licencia,
       especialidad,
       institucion,
-      años_experiencia,
+      anios_experiencia,
     } = req.body;
 
     if (
       !usuario ||
-      !clave ||
+      !password ||
       !nombre ||
       !correo ||
       !numero_licencia ||
@@ -142,7 +150,7 @@ export const registerMedico = async (req, res) => {
       return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
 
-    // ¿usuario ya existe?
+    // Usuario duplicado
     const [existeLogin] = await conmysql.query(
       "SELECT login_id FROM login WHERE usuario = ?",
       [usuario]
@@ -151,7 +159,7 @@ export const registerMedico = async (req, res) => {
       return res.status(400).json({ message: "El usuario ya existe" });
     }
 
-    // ¿correo ya existe?
+    // Correo duplicado
     const [existeCorreo] = await conmysql.query(
       "SELECT usuario_id FROM usuarios WHERE correo = ?",
       [correo]
@@ -162,15 +170,15 @@ export const registerMedico = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // 1) login
-    const hash = await bcrypt.hash(clave, 10);
+    // 1) Crear login
+    const hash = await bcrypt.hash(password, 10);
     const [loginResult] = await connection.query(
-      "INSERT INTO login (usuario, contraseña) VALUES (?, ?)",
+      "INSERT INTO login (usuario, password) VALUES (?, ?)",
       [usuario, hash]
     );
     const login_id = loginResult.insertId;
 
-    // 2) usuario con rol MEDICO (rol_id = 2)
+    // 2) Crear usuario rol médico
     const [usuarioResult] = await connection.query(
       `INSERT INTO usuarios 
        (login_id, rol_id, nombre, correo, estado_certificacion, fecha_solicitud_certificacion)
@@ -179,14 +187,14 @@ export const registerMedico = async (req, res) => {
     );
     const usuario_id = usuarioResult.insertId;
 
-    // 3) subir PDF a Cloudinary (si viene)
+    // 3) Subir PDF
     let documento_adjunto = null;
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder: "solicitudes_certificacion",
-            resource_type: "raw", // para PDF
+            resource_type: "raw",
           },
           (error, result) => {
             if (error) reject(error);
@@ -199,7 +207,7 @@ export const registerMedico = async (req, res) => {
       documento_adjunto = uploadResult.secure_url;
     }
 
-    // 4) insertar en tabla MEDICOS
+    // 4) Insertar en medicos
     await connection.query(
       `INSERT INTO medicos 
        (usuario_id, numero_licencia, especialidad, institucion, años_experiencia, documento_certificacion)
@@ -209,12 +217,12 @@ export const registerMedico = async (req, res) => {
         numero_licencia,
         especialidad,
         institucion,
-        años_experiencia || null,
+        anios_experiencia || null,
         documento_adjunto,
       ]
     );
 
-    // 5) crear solicitud de certificación (para panel admin)
+    // 5) Crear solicitud
     await connection.query(
       `INSERT INTO solicitudes_certificacion
        (usuario_id, numero_licencia, especialidad, institucion, documento_adjunto, estado)
@@ -231,15 +239,17 @@ export const registerMedico = async (req, res) => {
     await connection.commit();
 
     return res.status(201).json({
-      message: "Médico registrado y solicitud creada.",
+      message: "Médico registrado correctamente.",
       usuario_id,
     });
+
   } catch (error) {
     console.error("Error en registerMedico:", error);
     await connection.rollback();
-    return res
-      .status(500)
-      .json({ message: "Error en el servidor", error: error.message });
+    return res.status(500).json({
+      message: "Error en el servidor",
+      error: error.message,
+    });
   } finally {
     connection.release();
   }
