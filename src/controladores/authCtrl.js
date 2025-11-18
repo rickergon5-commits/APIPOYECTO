@@ -27,35 +27,25 @@ export const register = async (req, res) => {
     // 2. Encriptar contraseña
     const hash = await bcrypt.hash(clave, 10);
 
-    // 3. Insertar login
+    // 3. Insertar en login
     const [loginResult] = await conmysql.query(
       "INSERT INTO login (usuario, contraseña) VALUES (?, ?)",
       [usuario, hash]
     );
 
-    // 4. Crear usuario con rol paciente (3)
+    // 4. Crear usuario en tabla usuarios con rol 3 (paciente)
     const [userResult] = await conmysql.query(
       `INSERT INTO usuarios (login_id, rol_id, nombre, correo)
        VALUES (?, 3, ?, ?)`,
       [loginResult.insertId, nombre, correo]
     );
 
-    // 5. Crear token
-    const token = jwt.sign(
-      {
-        usuario_id: userResult.insertId,
-        nombre: nombre,
-        rol_id: 3,
-      },
-      JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.json({
+    // 5. Respuesta sin token
+    return res.status(201).json({
       message: "Registro exitoso",
-      token,
       usuario: {
         usuario_id: userResult.insertId,
+        login_id: loginResult.insertId,
         nombre,
         correo,
         rol_id: 3,
@@ -64,9 +54,10 @@ export const register = async (req, res) => {
 
   } catch (error) {
     console.error("Error en register:", error);
-    res.status(500).json({ message: "Error en el servidor" });
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };
+
 
 
 // ================================
