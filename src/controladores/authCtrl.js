@@ -3,9 +3,10 @@ import { conmysql } from "../db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
+import cloudinary from "../cloudinary.js"; // 👈 AÑADIDO
 
 // ================================
-// === REGISTRO (crear login + usuario)
+// === REGISTRO PACIENTE (normal)
 // ================================
 export const register = async (req, res) => {
   try {
@@ -114,5 +115,126 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Error en login:", error);
     res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+// ==========================================
+// === REGISTRO DE MÉDICO (+ solicitud)
+// ==========================================
+export const registerMedico = async (req, res) => {
+  const connection = await conmysql.getConnection(); // para poder hacer rollback
+
+  try {
+    const {
+      usuario,
+      clave,
+      nombre,
+      correo,
+      numero_licencia,
+      especialidad,
+      institucion,
+      años_experiencia,
+    } = req.body;
+
+    // Validaciones básicas
+    if (
+      !usuario ||
+      !clave ||
+      !nombre ||
+      !correo ||
+      !numero_licencia ||
+      !especialidad ||
+      !institucion
+    ) {
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
+    }
+
+    // Verificar usuario/login duplicado
+    const [existeLogin] = await conmysql.query(
+      "SELECT login_id FROM login WHERE usuario = ?",
+      [usuario]
+    );
+    if (existeLogin.length > 0) {
+      return res.status(400).json({ message: "El usuario ya existe" });
+    }
+
+    // Verificar correo duplicado
+    const [existeCorreo] = await conmysql.query(
+      "SELECT usuario_id FROM usuarios WHERE correo = ?",
+      [correo]
+    );
+    if (existeCorreo.length > 0) {
+      return res.status(400).json({ message: "El correo ya está registrado" });
+    }
+
+    await connection.beginTransaction();
+
+    // 1) Crear login (credenciales)
+    const hash = await bcrypt.hash(clave, 10);
+
+    const [loginResult] = await connection.query(
+      "INSERT INTO login (usuario, contraseña) VALUES (?, ?)",
+      [usuario, hash]
+    );
+    const login_id = loginResult.insertId;
+
+    // 2) Crear usuario base como PACIENTE (rol_id = 3) y estado_certificacion pendiente
+    const [usuarioResult] = await connection.query(
+      `INSERT INTO usuarios 
+       (login_id, rol_id, nombre, correo, estado_certificacion, fecha_solicitud_certificacion)
+       VALUES (?, 3, ?, ?, 'pendiente', NOW())`,
+      [login_id, nombre, correo]
+    );
+    const usuario_id = usuarioResult.insertId;
+
+    // 3) Subir PDF a Cloudinary (si viene)
+    let documento_adjunto = null;
+
+    if (req.file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "solicitudes_certificacion",
+            resource_type: "raw", // para PDF
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+
+      documento_adjunto = uploadResult.secure_url;
+    }
+
+    // 4) Crear solicitud de certificación
+    await connection.query(
+      `INSERT INTO solicitudes_certificacion
+       (usuario_id, numero_licencia, especialidad, institucion, documento_adjunto, estado)
+       VALUES (?,?,?,?,?, 'pendiente')`,
+      [
+        usuario_id,
+        numero_licencia,
+        especialidad,
+        institucion,
+        documento_adjunto,
+      ]
+    );
+
+    await connection.commit();
+
+    return res.status(201).json({
+      message: "Solicitud de médico registrada. En espera de revisión.",
+      usuario_id,
+    });
+  } catch (error) {
+    console.error("Error en registerMedico:", error);
+    await connection.rollback();
+    return res
+      .status(500)
+      .json({ message: "Error en el servidor", error: error.message });
+  } finally {
+    connection.release();
   }
 };
