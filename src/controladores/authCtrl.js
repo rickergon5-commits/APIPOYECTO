@@ -178,11 +178,11 @@ export const registerMedico = async (req, res) => {
     );
     const login_id = loginResult.insertId;
 
-    // 2) Crear usuario base como PACIENTE (rol_id = 3) y estado_certificacion pendiente
+    // 2) Crear usuario base como MÉDICO (rol_id = 2) y estado_certificacion pendiente
     const [usuarioResult] = await connection.query(
       `INSERT INTO usuarios 
        (login_id, rol_id, nombre, correo, estado_certificacion, fecha_solicitud_certificacion)
-       VALUES (?, 3, ?, ?, 'pendiente', NOW())`,
+       VALUES (?, 2, ?, ?, 'pendiente', NOW())`,   // <--- aquí cambiamos 3 por 2
       [login_id, nombre, correo]
     );
     const usuario_id = usuarioResult.insertId;
