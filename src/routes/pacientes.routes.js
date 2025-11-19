@@ -15,8 +15,8 @@ const router = Router();
 router.get("/pacientes/prueba", pruebaPacientes);
 
 // SOLO ADMIN (rol_id = 1)
-router.get("/usuarios/pacientes", verifyToken, verifyRole([1]), getPacientes);
-router.get("/usuarios/pacientes/:id", verifyToken, verifyRole([1]), getPacientexId);
-router.delete("/usuarios/pacientes/:id", verifyToken, verifyRole([1]), deletePaciente);
+router.get("pacientes", verifyToken, verifyRole([1]), getPacientes);
+router.get("/pacientes/:id", verifyToken, verifyRole([1]), getPacientexId);
+router.delete("/pacientes/:id", verifyToken, verifyRole([1]), deletePaciente);
 
 export default router;
