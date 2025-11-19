@@ -9,19 +9,19 @@ export const pruebaPacientes = (req, res) => {
 };
 
 // ================================
-// OBTENER TODOS LOS PACIENTES (admin)
+// OBTENER TODOS LOS PACIENTES (usuarios rol=3)
 // ================================
 export const getPacientes = async (req, res) => {
   try {
-    const [result] = await conmysql.query(
-      `SELECT p.*, u.nombre, u.correo, u.peso, u.estatura, u.edad
-       FROM pacientes p
-       INNER JOIN usuarios u ON u.usuario_id = p.usuario_id`
-    );
+    const [rows] = await conmysql.query(`
+      SELECT usuario_id, nombre, correo, peso, estatura, edad 
+      FROM usuarios 
+      WHERE rol_id = 3
+    `);
 
     res.json({
-      cant: result.length,
-      data: result,
+      cant: rows.length,
+      data: rows
     });
 
   } catch (error) {
@@ -35,21 +35,17 @@ export const getPacientes = async (req, res) => {
 // ================================
 export const getPacientexId = async (req, res) => {
   try {
-    const [result] = await conmysql.query(
-      `SELECT p.*, u.nombre, u.correo, u.peso, u.estatura, u.edad
-       FROM pacientes p
-       INNER JOIN usuarios u ON u.usuario_id = p.usuario_id
-       WHERE p.paciente_id = ?`,
+    const [rows] = await conmysql.query(
+      `SELECT usuario_id, nombre, correo, peso, estatura, edad 
+       FROM usuarios 
+       WHERE usuario_id=? AND rol_id=3`,
       [req.params.id]
     );
 
-    if (result.length === 0)
+    if (rows.length === 0)
       return res.status(404).json({ message: "Paciente no encontrado" });
 
-    res.json({
-      cant: 1,
-      data: result[0],
-    });
+    res.json(rows[0]);
 
   } catch (error) {
     console.error("Error en getPacientexId:", error);
@@ -58,46 +54,30 @@ export const getPacientexId = async (req, res) => {
 };
 
 // ================================
-// ELIMINAR PACIENTE COMPLETO
-// (pacientes + usuarios + login)
+// ELIMINAR PACIENTE (usuario + login)
 // ================================
 export const deletePaciente = async (req, res) => {
   try {
-    const { id } = req.params;
+    const pacienteId = req.params.id;
 
-    // 1️⃣ Buscar usuario_id
-    const [[pacienteData]] = await conmysql.query(
-      "SELECT usuario_id FROM pacientes WHERE paciente_id = ?",
-      [id]
+    // Obtener login_id
+    const [[usuario]] = await conmysql.query(
+      "SELECT login_id FROM usuarios WHERE usuario_id=? AND rol_id=3",
+      [pacienteId]
     );
 
-    if (!pacienteData) {
+    if (!usuario)
       return res.status(404).json({ message: "Paciente no encontrado" });
-    }
 
-    const usuario_id = pacienteData.usuario_id;
+    const login_id = usuario.login_id;
 
-    // 2️⃣ Buscar login_id del usuario
-    const [[usuarioData]] = await conmysql.query(
-      "SELECT login_id FROM usuarios WHERE usuario_id = ?",
-      [usuario_id]
-    );
-
-    const login_id = usuarioData?.login_id;
-
-    // 3️⃣ Eliminar PACIENTE
+    // Eliminar usuario
     await conmysql.query(
-      "DELETE FROM pacientes WHERE paciente_id = ?",
-      [id]
+      "DELETE FROM usuarios WHERE usuario_id=? AND rol_id=3",
+      [pacienteId]
     );
 
-    // 4️⃣ Eliminar USUARIO
-    await conmysql.query(
-      "DELETE FROM usuarios WHERE usuario_id = ?",
-      [usuario_id]
-    );
-
-    // 5️⃣ Eliminar LOGIN
+    // Eliminar login
     if (login_id) {
       await conmysql.query(
         "DELETE FROM login WHERE login_id = ?",
@@ -105,12 +85,11 @@ export const deletePaciente = async (req, res) => {
       );
     }
 
-    return res.json({
-      message: "Paciente eliminado correctamente (paciente + usuario + login)",
-    });
+    res.json({ message: "Paciente eliminado correctamente" });
 
   } catch (error) {
     console.error("Error en deletePaciente:", error);
-    return res.status(500).json({ message: "Error en el servidor" });
+    res.status(500).json({ message: "Error en el servidor" });
   }
 };
+
