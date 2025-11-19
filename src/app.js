@@ -16,6 +16,7 @@ import prediccionesRoutes from "./routes/predicciones.routes.js";
 import analisisRoutes from "./routes/analisis.routes.js";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import pacientesRoutes from "./routes/pacientes.routes.js";
 
 const app = express();
 
@@ -60,7 +61,7 @@ app.use("/api", cumplimientoRoutes);
 app.use("/api", prediccionesRoutes);
 app.use("/api", analisisRoutes);
 app.use("/api", notificacionesRoutes);
-
+app.use("/api", pacientesRoutes);
 // =============== MANEJO 404 ===============
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });
