@@ -19,6 +19,14 @@ router.get("/prueba", pruebaAdmins);
 
 // SOLO ADMIN (rol 1) puede entrar aquí ⬇⬇⬇
 router.get(
+  "/administradores/principal",
+  verifyToken,
+  verifyRole([1]),
+  principal
+);
+
+
+router.get(
   "/administradores",
   verifyToken,
   verifyRole([1]),
@@ -53,11 +61,5 @@ router.delete(
   deleteAdministrador
 );
 
-router.get(
-  "/administradores/principal",
-  verifyToken,
-  verifyRole([1]),
-  principal
-);
 
 export default router;
