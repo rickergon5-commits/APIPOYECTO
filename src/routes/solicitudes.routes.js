@@ -1,7 +1,8 @@
+// src/rutas/solicitudes.routes.js
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
-import { uploadPDF } from "../middlewares/upload.js"; 
-import { verifyRole } from "../middlewares/verifyRole.js";   // ⬅ FALTABA ESTO
+import { uploadPDF } from "../middlewares/upload.js";
+import { verifyRole } from "../middlewares/verifyRole.js";
 
 import {
   pruebaSolicitudes,
@@ -9,7 +10,7 @@ import {
   getSolicitudxId,
   postSolicitud,
   putSolicitud,
-  deleteSolicitud
+  deleteSolicitud,
 } from "../controladores/solicitudesCtrl.js";
 
 const router = Router();
@@ -17,6 +18,7 @@ const router = Router();
 router.get("/prueba", pruebaSolicitudes);
 
 router.get("/solicitudes", verifyToken, getSolicitudes);
+
 router.get("/solicitudes/:id", verifyToken, getSolicitudxId);
 
 router.post(
@@ -29,12 +31,15 @@ router.post(
 router.put(
   "/solicitudes/:id",
   verifyToken,
-  verifyRole([1]),
-  uploadPDF.single("documento_adjunto"),
+  verifyRole([1]), 
   putSolicitud
 );
 
-
-router.delete("/solicitudes/:id", verifyToken, deleteSolicitud);
+router.delete(
+  "/solicitudes/:id",
+  verifyToken,
+  verifyRole([1]),
+  deleteSolicitud
+);
 
 export default router;
