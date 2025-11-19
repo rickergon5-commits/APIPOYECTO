@@ -155,3 +155,31 @@ export const deleteAdministrador = async (req, res) => {
     return res.status(500).json({ message: "Error en el servidor" });
   }
 };
+
+export const principal = async (req, res) => {
+  try {
+    const [[medicos]] = await conmysql.query(
+      `SELECT COUNT(*) AS total FROM usuarios WHERE rol_id = 2`
+    );
+
+    const [[pacientes]] = await conmysql.query(
+      `SELECT COUNT(*) AS total FROM usuarios WHERE rol_id = 3`
+    );
+
+    const [[pendientes]] = await conmysql.query(
+      `SELECT COUNT(*) AS total 
+       FROM solicitudes_certificacion 
+       WHERE estado = 'pendiente'`
+    );
+
+    res.json({
+      totalMedicos: medicos.total,
+      totalPacientes: pacientes.total,
+      solicitudesPendientes: pendientes.total
+    });
+
+  } catch (error) {
+    console.error("Error en dashboard:", error);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+};

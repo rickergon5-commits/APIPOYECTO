@@ -9,7 +9,8 @@ import {
   getAdministradorxId,
   postAdministrador,
   putAdministrador,
-  deleteAdministrador
+  deleteAdministrador,
+  principal
 } from "../controladores/administradoresCtrl.js";
 
 const router = Router();
@@ -51,5 +52,7 @@ router.delete(
   verifyRole([1]),
   deleteAdministrador
 );
+
+router.get("/principal", verifyToken, verifyRole([1]), principal);
 
 export default router;
