@@ -9,7 +9,7 @@ export const BD_PORT = process.env.BD_PORT || 3306;
 
 export const PORT = process.env.PORT || 3000;
 
-export const JWT_SECRET = process.env.JWT_SECRET;
-export const JWT_EXPIRES = process.env.JWT_EXPIRES;
+export const JWT_SECRET = process.env.JWT_SECRET || "CLAVEapi1";
+export const JWT_EXPIRES = process.env.JWT_EXPIRES || "2h";
 
 export const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
