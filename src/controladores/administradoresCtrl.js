@@ -1,17 +1,9 @@
-// controladores/administradoresCtrl.js
-
 import { conmysql } from "../db.js";
 
-/* ===============================
-   PRUEBA DE RUTA
-================================ */
 export const pruebaAdmins = (req, res) => {
   res.send("prueba con éxito - administradores");
 };
 
-/* ===============================
-   OBTENER TODOS LOS ADMINISTRADORES
-================================ */
 export const getAdministradores = async (req, res) => {
   try {
     const [result] = await conmysql.query(`
@@ -35,9 +27,6 @@ export const getAdministradores = async (req, res) => {
   }
 };
 
-/* ===============================
-   OBTENER ADMIN POR ID
-================================ */
 export const getAdministradorxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(`
@@ -65,14 +54,10 @@ export const getAdministradorxId = async (req, res) => {
   }
 };
 
-/* ===============================
-   CREAR ADMINISTRADOR
-================================ */
 export const postAdministrador = async (req, res) => {
   try {
     const { usuario_id, nivel_acceso, departamento } = req.body;
 
-    // Verificar si ya existe
     const [exist] = await conmysql.query(
       "SELECT * FROM administradores WHERE usuario_id = ?",
       [usuario_id]
@@ -84,7 +69,6 @@ export const postAdministrador = async (req, res) => {
       });
     }
 
-    // Insertar nuevo admin
     const [result] = await conmysql.query(`
       INSERT INTO administradores (usuario_id, nivel_acceso, departamento)
       VALUES (?, ?, ?)
@@ -100,9 +84,6 @@ export const postAdministrador = async (req, res) => {
   }
 };
 
-/* ===============================
-   EDITAR ADMINISTRADOR
-================================ */
 export const putAdministrador = async (req, res) => {
   try {
     const { id } = req.params;
@@ -133,9 +114,6 @@ export const putAdministrador = async (req, res) => {
   }
 };
 
-/* ===============================
-   ELIMINAR ADMINISTRADOR
-================================ */
 export const deleteAdministrador = async (req, res) => {
   try {
     const { id } = req.params;

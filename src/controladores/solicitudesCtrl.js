@@ -2,13 +2,10 @@
 import { conmysql } from "../db.js";
 import cloudinary from "../cloudinary.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaSolicitudes = (req, res) => {
   res.send("prueba con éxito - solicitudes_certificacion");
 };
 
-// === OBTENER SOLICITUDES (opcional: filtrar por estado) ===
-// GET /api/solicitudes?estado=pendiente
 export const getSolicitudes = async (req, res) => {
   try {
     const { estado } = req.query;
@@ -44,7 +41,6 @@ export const getSolicitudes = async (req, res) => {
   }
 };
 
-// === OBTENER SOLICITUD POR ID ===
 export const getSolicitudxId = async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,8 +75,6 @@ export const getSolicitudxId = async (req, res) => {
   }
 };
 
-// === CREAR NUEVA SOLICITUD (subiendo PDF a Cloudinary) ===
-// Normalmente esto lo usas desde el registro de médico
 export const postSolicitud = async (req, res) => {
   try {
     const { usuario_id, numero_licencia, especialidad, institucion } = req.body;
@@ -91,13 +85,12 @@ export const postSolicitud = async (req, res) => {
 
     let documento_adjunto = null;
 
-    // Si viene archivo PDF, lo subimos a Cloudinary
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder: "solicitudes_certificacion",
-            resource_type: "raw", // 👈 para PDFs
+            resource_type: "raw", 
           },
           (error, result) => {
             if (error) reject(error);
@@ -109,7 +102,6 @@ export const postSolicitud = async (req, res) => {
 
       documento_adjunto = uploadResult.secure_url;
     } else if (req.body.documento_adjunto) {
-      // Por si algún día mandas una URL directa desde el front
       documento_adjunto = req.body.documento_adjunto;
     }
 
@@ -131,11 +123,6 @@ export const postSolicitud = async (req, res) => {
   }
 };
 
-/* =========================================================
-   ACTUALIZAR SOLICITUD (APROBAR o RECHAZAR) - SOLO ADMIN
-   ========================================================= */
-// PUT /api/solicitudes/:id
-// body: { estado: "aprobada" | "rechazada", comentarios_revision?: string }
 export const putSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
@@ -145,7 +132,6 @@ export const putSolicitud = async (req, res) => {
       return res.status(400).json({ message: "Estado inválido" });
     }
 
-    // Obtenemos la solicitud
     const [currentRows] = await conmysql.query(
       "SELECT * FROM solicitudes_certificacion WHERE solicitud_id = ?",
       [id]
@@ -155,10 +141,8 @@ export const putSolicitud = async (req, res) => {
       return res.status(404).json({ message: "Solicitud no encontrada" });
     }
 
-    // Sacamos el usuario logueado del token (lo deja verifyToken en req.user)
     const usuarioLogueadoId = req.user?.usuario_id || null;
 
-    // Buscamos el admin_id en la tabla administradores por ese usuario
     let adminId = null;
     if (usuarioLogueadoId) {
       const [adminRows] = await conmysql.query(
@@ -170,7 +154,6 @@ export const putSolicitud = async (req, res) => {
       }
     }
 
-    // Actualizamos SOLO cosas de revisión (no número de licencia, etc.)
     const [result] = await conmysql.query(
       `UPDATE solicitudes_certificacion
        SET estado = ?,
@@ -185,7 +168,6 @@ export const putSolicitud = async (req, res) => {
       return res.status(404).json({ message: "Solicitud no encontrada" });
     }
 
-    // De paso, si se aprueba, podemos marcar al médico como certificado_por = adminId
     if (estado === "aprobada" && adminId) {
       await conmysql.query(
         `UPDATE medicos 
@@ -207,7 +189,6 @@ export const putSolicitud = async (req, res) => {
   }
 };
 
-// === ELIMINAR SOLICITUD (lo normal es que solo admin lo haga) ===
 export const deleteSolicitud = async (req, res) => {
   try {
     const { id } = req.params;

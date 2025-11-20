@@ -1,5 +1,3 @@
-// routes/medicos.routes.js
-// rutas/medicos.routes.js (o como se llame)
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { uploadPDF } from "../middlewares/upload.js"; // 👈 AÑADIDO
@@ -20,7 +18,6 @@ router.get("/prueba", pruebaMedicos);
 router.get("/medicos", verifyToken, getMedicos);
 router.get("/medicos/:id", verifyToken, getMedicoxId);
 
-// 👇 Aquí ahora pasamos también el archivo PDF en el campo `documento_certificacion`
 router.post(
   "/medicos",
   verifyToken,

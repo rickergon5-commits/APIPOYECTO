@@ -1,15 +1,9 @@
-// controladores/rolesCtrl.js
-// Controlador para la tabla roles
-// Sirve para gestionar los tipos de usuario: administrador, médico, paciente
-
 import { conmysql } from "../db.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaRoles = (req, res) => {
   res.send("prueba con éxito - roles");
 };
 
-// === OBTENER TODOS LOS ROLES ===
 export const getRoles = async (req, res) => {
   try {
     const [result] = await conmysql.query("SELECT * FROM roles");
@@ -24,7 +18,6 @@ export const getRoles = async (req, res) => {
   }
 };
 
-// === OBTENER ROL POR ID ===
 export const getRolxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -45,7 +38,6 @@ export const getRolxId = async (req, res) => {
   }
 };
 
-// === INSERTAR ROL ===
 export const postRol = async (req, res) => {
   try {
     const { nombre_rol, descripcion } = req.body;
@@ -62,7 +54,6 @@ export const postRol = async (req, res) => {
   }
 };
 
-// === ACTUALIZAR ROL ===
 export const putRol = async (req, res) => {
   try {
     const { id } = req.params;
@@ -87,7 +78,6 @@ export const putRol = async (req, res) => {
   }
 };
 
-// === ELIMINAR ROL ===
 export const deleteRol = async (req, res) => {
   try {
     const { id } = req.params;

@@ -1,14 +1,9 @@
-// controladores/registroCumplimientoCtrl.js
-// Tabla registro_cumplimiento: seguimiento diario de si se cumplió un hábito
-
 import { conmysql } from "../db.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaCumplimiento = (req, res) => {
   res.send("prueba con éxito - registro_cumplimiento");
 };
 
-// === OBTENER TODO EL REGISTRO DE CUMPLIMIENTO ===
 export const getRegistrosCumplimiento = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -27,7 +22,6 @@ export const getRegistrosCumplimiento = async (req, res) => {
   }
 };
 
-// === OBTENER REGISTROS POR PLAN_HABITO_ID ===
 export const getCumplimientoPorPlan = async (req, res) => {
   try {
     const { plan_habito_id } = req.params;
@@ -47,7 +41,6 @@ export const getCumplimientoPorPlan = async (req, res) => {
   }
 };
 
-// === OBTENER REGISTRO POR ID ===
 export const getCumplimientoxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -71,7 +64,6 @@ export const getCumplimientoxId = async (req, res) => {
   }
 };
 
-// === CREAR REGISTRO DE CUMPLIMIENTO ===
 export const postCumplimiento = async (req, res) => {
   try {
     const { plan_habito_id, fecha, cumplido, nota } = req.body;
@@ -90,7 +82,6 @@ export const postCumplimiento = async (req, res) => {
   }
 };
 
-// === ACTUALIZAR REGISTRO DE CUMPLIMIENTO ===
 export const putCumplimiento = async (req, res) => {
   try {
     const { id } = req.params;
@@ -119,7 +110,6 @@ export const putCumplimiento = async (req, res) => {
   }
 };
 
-// === ELIMINAR REGISTRO DE CUMPLIMIENTO ===
 export const deleteCumplimiento = async (req, res) => {
   try {
     const { id } = req.params;

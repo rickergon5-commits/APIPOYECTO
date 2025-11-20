@@ -17,7 +17,7 @@ import {createPool} from "mysql2/promise";
 
  try {
   const connection = await conmysql.getConnection();
-  console.log("✅ Conectado correctamente a MySQL en Clever Cloud");
+  console.log(" Conectado correctamente a MySQL en Clever Cloud");
   connection.release();
 } catch (err) {
   console.error("Error al conectar a MySQL:", err.message);

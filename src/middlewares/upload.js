@@ -1,15 +1,11 @@
-// middlewares/upload.js
 import multer from "multer";
 
-// Usamos memoria para que luego puedas subir a Cloudinary con req.file.buffer
 const storage = multer.memoryStorage();
 
-/**
- * Upload para IMÁGENES (jpg, jpeg, png, gif)
- */
+
 export const upload = multer({
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  limits: { fileSize: 2 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     const allowed = /jpg|jpeg|png|gif/;
     const mimeOk = allowed.test(file.mimetype);
@@ -21,12 +17,10 @@ export const upload = multer({
   },
 });
 
-/**
- * Upload para PDF
- */
+
 export const uploadPDF = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 5 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     const allowed = /pdf/;
     const mimeOk = file.mimetype === "application/pdf";

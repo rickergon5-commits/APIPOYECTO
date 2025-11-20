@@ -1,4 +1,3 @@
-// src/rutas/solicitudes.routes.js
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { uploadPDF } from "../middlewares/upload.js";

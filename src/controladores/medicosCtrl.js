@@ -1,15 +1,10 @@
-// controladores/medicosCtrl.js
-// Controlador para la tabla medicos
-
 import { conmysql } from "../db.js";
 import cloudinary from "../cloudinary.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaMedicos = (req, res) => {
   res.send("prueba con éxito - medicos");
 };
 
-// === OBTENER TODOS LOS MÉDICOS ===
 export const getMedicos = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -28,7 +23,6 @@ export const getMedicos = async (req, res) => {
   }
 };
 
-// === OBTENER MÉDICO POR ID ===
 export const getMedicoxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -52,7 +46,6 @@ export const getMedicoxId = async (req, res) => {
   }
 };
 
-// === INSERTAR MÉDICO (subiendo PDF a Cloudinary) ===
 export const postMedico = async (req, res) => {
   try {
     const {
@@ -60,13 +53,12 @@ export const postMedico = async (req, res) => {
       numero_licencia,
       especialidad,
       institucion,
-      anios_experiencia,  // campo del body
-      certificado_por     // opcional, puede ir null
+      anios_experiencia,  
+      certificado_por    
     } = req.body;
 
     let documento_certificacion = null;
 
-    // Subida del PDF
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -113,7 +105,6 @@ export const postMedico = async (req, res) => {
   }
 };
 
-// === ACTUALIZAR MÉDICO ===
 export const putMedico = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,11 +112,10 @@ export const putMedico = async (req, res) => {
       numero_licencia,
       especialidad,
       institucion,
-      anios_experiencia,  // del body
+      anios_experiencia,  
       certificado_por
     } = req.body;
 
-    // Obtener documento previo
     const [currentRows] = await conmysql.query(
       "SELECT documento_certificacion FROM medicos WHERE medico_id=?",
       [id]
@@ -136,7 +126,6 @@ export const putMedico = async (req, res) => {
 
     let documento_certificacion = currentRows[0].documento_certificacion;
 
-    // Subida del PDF (si se envía uno nuevo)
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -192,12 +181,10 @@ export const putMedico = async (req, res) => {
   }
 };
 
-// === ELIMINAR MÉDICO COMPLETO (medicos + usuarios + login) ===
 export const deleteMedico = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1️⃣ Obtener usuario_id del medico
     const [[medicoData]] = await conmysql.query(
       "SELECT usuario_id FROM medicos WHERE medico_id = ?",
       [id]
@@ -209,7 +196,6 @@ export const deleteMedico = async (req, res) => {
 
     const usuario_id = medicoData.usuario_id;
 
-    // 2️⃣ Obtener login_id del usuario
     const [[usuarioData]] = await conmysql.query(
       "SELECT login_id FROM usuarios WHERE usuario_id = ?",
       [usuario_id]
@@ -217,19 +203,16 @@ export const deleteMedico = async (req, res) => {
 
     const login_id = usuarioData?.login_id;
 
-    // 3️⃣ Eliminar MÉDICO
     await conmysql.query(
       "DELETE FROM medicos WHERE medico_id = ?",
       [id]
     );
 
-    // 4️⃣ Eliminar USUARIO
     await conmysql.query(
       "DELETE FROM usuarios WHERE usuario_id = ?",
       [usuario_id]
     );
 
-    // 5️⃣ Eliminar LOGIN (si existe)
     if (login_id) {
       await conmysql.query(
         "DELETE FROM login WHERE login_id = ?",

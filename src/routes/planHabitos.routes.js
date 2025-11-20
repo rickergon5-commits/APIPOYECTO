@@ -1,4 +1,3 @@
-// routes/planHabitos.routes.js
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 

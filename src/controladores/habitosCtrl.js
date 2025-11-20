@@ -1,14 +1,9 @@
-// controladores/habitosCtrl.js
-// Tabla registro_habitos: catálogo de tipos de hábitos (caminar, beber agua, etc.)
-
 import { conmysql } from "../db.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaHabitos = (req, res) => {
   res.send("prueba con éxito - registro_habitos");
 };
 
-// === OBTENER TODOS LOS HÁBITOS ===
 export const getHabitos = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -25,7 +20,6 @@ export const getHabitos = async (req, res) => {
   }
 };
 
-// === OBTENER HÁBITO POR ID ===
 export const getHabitoxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -46,7 +40,6 @@ export const getHabitoxId = async (req, res) => {
   }
 };
 
-// === CREAR HÁBITO ===
 export const postHabito = async (req, res) => {
   try {
     const { nombre_habito, descripcion } = req.body;
@@ -73,7 +66,6 @@ export const postHabito = async (req, res) => {
   }
 };
 
-// === ACTUALIZAR HÁBITO ===
 export const putHabito = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,7 +91,6 @@ export const putHabito = async (req, res) => {
   }
 };
 
-// === ELIMINAR HÁBITO ===
 export const deleteHabito = async (req, res) => {
   try {
     const { id } = req.params;
@@ -116,7 +107,6 @@ export const deleteHabito = async (req, res) => {
   } catch (error) {
     console.error("Error en deleteHabito:", error);
 
-    // Si el hábito está referenciado en plan_habitos (FK)
     if (error.code === "ER_ROW_IS_REFERENCED_2" || error.errno === 1451) {
       return res.status(400).json({
         message:

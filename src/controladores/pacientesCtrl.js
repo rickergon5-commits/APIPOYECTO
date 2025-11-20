@@ -1,15 +1,9 @@
 import { conmysql } from "../db.js";
 
-// ================================
-// PRUEBA
-// ================================
 export const pruebaPacientes = (req, res) => {
   res.send("Prueba con éxito - pacientes");
 };
 
-// ================================
-// OBTENER TODOS LOS PACIENTES (admin + medico)
-// ================================
 export const getPacientes = async (req, res) => {
   try {
     const [rows] = await conmysql.query(`
@@ -37,9 +31,6 @@ export const getPacientes = async (req, res) => {
   }
 };
 
-// ================================
-// OBTENER PACIENTE POR ID (admin + medico)
-// ================================
 export const getPacientexId = async (req, res) => {
   try {
     const [rows] = await conmysql.query(`
@@ -69,15 +60,12 @@ export const getPacientexId = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
-// =================================
-// UPDATE PACIENTE
-// =================================
+
 export const updatePerfilPaciente = async (req, res) => {
   const id = parseInt(req.params.id);
   const userId = req.user.usuario_id;
   const rol = req.user.rol_id;
 
-  // Solo admin o el mismo paciente
   if (rol !== 1 && id !== userId) {
     return res.status(403).json({ message: "No autorizado" });
   }
@@ -98,15 +86,10 @@ export const updatePerfilPaciente = async (req, res) => {
   }
 };
 
-
-// ================================
-// ELIMINAR PACIENTE (solo admin)
-// ================================
 export const deletePaciente = async (req, res) => {
   try {
     const usuarioId = req.params.id;
 
-    // 1️⃣ Obtener login_id del usuario
     const [[usuario]] = await conmysql.query(
       "SELECT login_id FROM usuarios WHERE usuario_id = ? AND rol_id = 3",
       [usuarioId]
@@ -117,19 +100,16 @@ export const deletePaciente = async (req, res) => {
 
     const loginId = usuario.login_id;
 
-    // 2️⃣ Eliminar registro en tabla pacientes
     await conmysql.query(
       "DELETE FROM pacientes WHERE usuario_id = ?",
       [usuarioId]
     );
 
-    // 3️⃣ Eliminar usuario
     await conmysql.query(
       "DELETE FROM usuarios WHERE usuario_id = ?",
       [usuarioId]
     );
 
-    // 4️⃣ Eliminar login
     if (loginId) {
       await conmysql.query(
         "DELETE FROM login WHERE login_id = ?",

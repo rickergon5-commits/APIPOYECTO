@@ -1,4 +1,3 @@
-// routes/administradores.routes.js
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { verifyRole } from "../middlewares/verifyRole.js";
@@ -17,7 +16,6 @@ const router = Router();
 
 router.get("/prueba", pruebaAdmins);
 
-// SOLO ADMIN (rol 1) puede entrar aquí ⬇⬇⬇
 router.get(
   "/administradores/principal",
   verifyToken,

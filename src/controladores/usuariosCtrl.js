@@ -1,16 +1,10 @@
-// src/controladores/usuariosCtrl.js
 import { conmysql } from "../db.js";
 
-// ================================
-// PRUEBA DE CONEXIÓN
-// ================================
+
 export const pruebaUsuarios = (req, res) => {
   res.send("Prueba con éxito - usuarios");
 };
 
-// ================================
-// OBTENER TODOS LOS USUARIOS (solo admin)
-// ================================
 export const getUsuarios = async (req, res) => {
   try {
     const [result] = await conmysql.query("SELECT * FROM usuarios");
@@ -26,18 +20,12 @@ export const getUsuarios = async (req, res) => {
   }
 };
 
-// ================================
-// OBTENER USUARIO POR ID 
-// (admin o el mismo usuario)
-// ================================
 export const getUsuarioxId = async (req, res) => {
   try {
     const usuarioIdSolicitado = parseInt(req.params.id);
     const usuarioTokenId = req.user?.usuario_id;
     const rol = req.user?.rol_id;
 
-    // Validación: un usuario solo puede verse a sí mismo,
-    // excepto si es admin (rol_id = 1)
     if (rol !== 1 && usuarioIdSolicitado !== usuarioTokenId) {
       return res.status(403).json({ message: "No puedes ver datos de otro usuario" });
     }
@@ -58,9 +46,6 @@ export const getUsuarioxId = async (req, res) => {
   }
 };
 
-// ================================
-// CREAR USUARIO (solo admin)
-// ================================
 export const postUsuario = async (req, res) => {
   try {
     const {
@@ -88,9 +73,6 @@ export const postUsuario = async (req, res) => {
   }
 };
 
-// ================================
-// ACTUALIZAR USUARIO (solo admin)
-// ================================
 export const putUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,9 +110,6 @@ export const putUsuario = async (req, res) => {
   }
 };
 
-// ================================
-// ELIMINAR USUARIO (solo admin)
-// ================================
 export const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.params;

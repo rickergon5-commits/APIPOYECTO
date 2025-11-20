@@ -1,14 +1,9 @@
-// controladores/planHabitosCtrl.js
-// Tabla plan_habitos: relaciona paciente + hábito + frecuencia + validación médica
-
 import { conmysql } from "../db.js";
 
-// === PRUEBA DE CONEXIÓN ===
 export const pruebaPlanHabitos = (req, res) => {
   res.send("prueba con éxito - plan_habitos");
 };
 
-// === OBTENER PLANES DE HÁBITOS (TODOS) ===
 export const getPlanesHabitos = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -31,7 +26,6 @@ export const getPlanesHabitos = async (req, res) => {
   }
 };
 
-// === OBTENER PLANES DE UN PACIENTE POR USUARIO_ID ===
 export const getPlanesPorUsuario = async (req, res) => {
   try {
     const { usuario_id } = req.params;
@@ -54,7 +48,6 @@ export const getPlanesPorUsuario = async (req, res) => {
   }
 };
 
-// === OBTENER PLAN DE HÁBITO POR ID ===
 export const getPlanHabitoxId = async (req, res) => {
   try {
     const [result] = await conmysql.query(
@@ -78,9 +71,6 @@ export const getPlanHabitoxId = async (req, res) => {
   }
 };
 
-// === CREAR PLAN DE HÁBITO ===
-// En la práctica, el médico puede enviar SOLO:
-// usuario_id, habito_id, frecuencia, meta
 export const postPlanHabito = async (req, res) => {
   try {
     const {
@@ -100,12 +90,10 @@ export const postPlanHabito = async (req, res) => {
         .json({ message: "usuario_id y habito_id son obligatorios" });
     }
 
-    // --- Valores por defecto ---
     const _estado = estado || "Activo";
     const _origen = origen || "medico";
     const _estado_validacion = estado_validacion || "aprobado";
 
-    // --- Determinar médico validador según token ---
     let medico_validador_id = null;
 
     if (req.user && req.user.rol_id === 2) {
@@ -121,12 +109,10 @@ export const postPlanHabito = async (req, res) => {
       }
     }
 
-    // Fecha de validación automática si está aprobado
     const usarFechaValidacion =
       fecha_validacion ||
       (_estado_validacion !== "pendiente" ? new Date() : null);
 
-    // --- Insert final ---
     const [result] = await conmysql.query(
       `INSERT INTO plan_habitos
        (usuario_id, habito_id, frecuencia, meta, estado, origen,
@@ -153,9 +139,6 @@ export const postPlanHabito = async (req, res) => {
   }
 };
 
-
-// === ACTUALIZAR PLAN DE HÁBITO ===
-// Útil para cuando el médico ajusta el plan o cambia el estado
 export const putPlanHabito = async (req, res) => {
   try {
     const { id } = req.params;
@@ -199,7 +182,6 @@ export const putPlanHabito = async (req, res) => {
   }
 };
 
-// === ELIMINAR PLAN DE HÁBITO ===
 export const deletePlanHabito = async (req, res) => {
   try {
     const { id } = req.params;

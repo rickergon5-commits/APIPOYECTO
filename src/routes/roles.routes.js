@@ -1,5 +1,3 @@
-// routes/roles.routes.js
-
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -14,10 +12,8 @@ import {
 
 const router = Router();
 
-// === Ruta pública (sin token) ===
 router.get("/prueba", pruebaRoles);
 
-// === Rutas protegidas ===
 router.get("/roles", verifyToken, getRoles);
 router.get("/roles/:id", verifyToken, getRolxId);
 router.post("/roles", verifyToken, postRol);
