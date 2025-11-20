@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import chatOpenAI from "./rutas/chatbot-openai.js";
+import chatOpenAI from "./routes/chatbot-openai.js";
 
 
 import usuariosRoutes from "./routes/usuarios.routes.js";
