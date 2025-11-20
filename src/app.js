@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import chatOpenAI from "./rutas/chatbot-openai.js";
 
 
 import usuariosRoutes from "./routes/usuarios.routes.js";
@@ -52,6 +53,8 @@ app.use("/api", habitosRoutes);
 app.use("/api", planHabitosRoutes);
 app.use("/api", cumplimientoRoutes);
 app.use("/api", pacientesRoutes);
+app.use("/api", chatOpenAI);
+
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });
 });
