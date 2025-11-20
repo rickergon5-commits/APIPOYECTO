@@ -60,10 +60,8 @@ export const postMedico = async (req, res) => {
       numero_licencia,
       especialidad,
       institucion,
-      anios_experiencia, // ← CAMPO CORRECTO
-      fecha_vencimiento_licencia,
-      certificado_por,
-      notas_certificacion,
+      anios_experiencia,  // campo del body
+      certificado_por     // opcional, puede ir null
     } = req.body;
 
     let documento_certificacion = null;
@@ -91,19 +89,17 @@ export const postMedico = async (req, res) => {
 
     const [result] = await conmysql.query(
       `INSERT INTO medicos
-       (usuario_id, numero_licencia, especialidad, institucion, años_experiencia,
-        documento_certificacion, fecha_vencimiento_licencia, certificado_por, notas_certificacion)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
+       (usuario_id, numero_licencia, especialidad, institucion, anios_experiencia,
+        documento_certificacion, certificado_por)
+       VALUES (?,?,?,?,?,?,?)`,
       [
         usuario_id,
         numero_licencia,
         especialidad,
         institucion,
-        anios_experiencia || null, // ← CORREGIDO
+        anios_experiencia || null,
         documento_certificacion,
-        fecha_vencimiento_licencia,
-        certificado_por,
-        notas_certificacion,
+        certificado_por || null,
       ]
     );
 
@@ -125,10 +121,8 @@ export const putMedico = async (req, res) => {
       numero_licencia,
       especialidad,
       institucion,
-      anios_experiencia, // ← CAMPO CORRECTO
-      fecha_vencimiento_licencia,
-      certificado_por,
-      notas_certificacion,
+      anios_experiencia,  // del body
+      certificado_por
     } = req.body;
 
     // Obtener documento previo
@@ -165,18 +159,20 @@ export const putMedico = async (req, res) => {
 
     const [result] = await conmysql.query(
       `UPDATE medicos 
-       SET numero_licencia=?, especialidad=?, institucion=?, años_experiencia=?,
-           documento_certificacion=?, fecha_vencimiento_licencia=?, certificado_por=?, notas_certificacion=?
+       SET numero_licencia=?,
+           especialidad=?,
+           institucion=?,
+           anios_experiencia=?,
+           documento_certificacion=?,
+           certificado_por=?
        WHERE medico_id=?`,
       [
         numero_licencia,
         especialidad,
         institucion,
-        anios_experiencia || null, // ← CORREGIDO
+        anios_experiencia || null,
         documento_certificacion,
-        fecha_vencimiento_licencia,
-        certificado_por,
-        notas_certificacion,
+        certificado_por || null,
         id,
       ]
     );
@@ -250,4 +246,3 @@ export const deleteMedico = async (req, res) => {
     return res.status(500).json({ message: "Error en el servidor" });
   }
 };
-
