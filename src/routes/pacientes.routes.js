@@ -14,10 +14,10 @@ const router = Router();
 router.get("/pacientes/prueba", pruebaPacientes);
 
 // 👉 Ver pacientes: ADMIN (1) y MÉDICO (2)
-router.get("/pacientes", verifyToken, verifyRole([1, 2]), getPacientes);
+router.get("/pacientes", verifyToken, verifyRole([1, 2, 3]), getPacientes);
 
 // 👉 Ver detalle paciente: ADMIN (1) y MÉDICO (2)
-router.get("/pacientes/:id", verifyToken, verifyRole([1, 2]), getPacientexId);
+router.get("/pacientes/:id", verifyToken, verifyRole([1, 2, 3]), getPacientexId);
 
 // 👉 Eliminar paciente: SOLO ADMIN
 router.delete("/pacientes/:id", verifyToken, verifyRole([1]), deletePaciente);
