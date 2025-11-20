@@ -69,6 +69,35 @@ export const getPacientexId = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
+// =================================
+// UPDATE PACIENTE
+// =================================
+export const updatePerfilPaciente = async (req, res) => {
+  const id = parseInt(req.params.id);
+  const userId = req.user.usuario_id;
+  const rol = req.user.rol_id;
+
+  // Solo admin o el mismo paciente
+  if (rol !== 1 && id !== userId) {
+    return res.status(403).json({ message: "No autorizado" });
+  }
+
+  const { peso, estatura, edad } = req.body;
+
+  try {
+    await conmysql.query(
+      `UPDATE pacientes SET peso=?, estatura=?, edad=? WHERE usuario_id=?`,
+      [peso, estatura, edad, id]
+    );
+
+    res.json({ message: "Datos actualizados correctamente" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar" });
+  }
+};
+
 
 // ================================
 // ELIMINAR PACIENTE (solo admin)
